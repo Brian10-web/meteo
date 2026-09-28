@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>Bulletin météo</title>
+<style>
+:root{--bg1:#0b1220;--bg2:#12304d;--card:rgba(255,255,255,.10);--border:rgba(255,255,255,.16);--text:#f8fafc;--muted:#cbd5e1;--accent:#38bdf8}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:"Segoe UI",system-ui,sans-serif;color:var(--text);background:linear-gradient(160deg,var(--bg1),var(--bg2)) fixed;padding:20px 14px calc(20px + env(safe-area-inset-bottom))}
+.wrap{max-width:820px;margin:auto}
+header{text-align:center;margin-bottom:16px}
+header h1{margin:0;font-size:1.3rem;font-weight:600}
+.bar-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;color:var(--muted);font-size:.85rem}
+button{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:8px 14px;font-size:.9rem;cursor:pointer}
+.banner{border-radius:14px;padding:12px 16px;margin-bottom:12px;line-height:1.5;font-size:.95rem}
+.alerte{background:rgba(239,68,68,.22);border:1px solid #f87171}
+.info{background:rgba(250,204,21,.15);border:1px solid #facc15}
+.hero{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hero .icon{font-size:4.2rem;line-height:1}
+.hero .temp{font-size:4rem;font-weight:300;line-height:1}
+.hero .desc{color:var(--muted);margin-top:4px}
+.hero .minmax{text-align:right}
+.hero .minmax span{display:block;color:var(--muted);font-size:.8rem}
+.max{color:#fb923c}.min{color:var(--accent)}
+h2{margin:24px 0 10px;font-size:.8rem;text-transform:uppercase;letter-spacing:2px;color:var(--accent);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.item{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px}
+.label{color:var(--muted);font-size:.85rem;margin-bottom:6px}
+.value{font-size:1.5rem;font-weight:600}
+.value small{font-size:.85rem;font-weight:400;color:var(--muted)}
+.sub{color:var(--muted);font-size:.8rem;margin-top:4px}
+.pos{font-size:1.05rem;font-weight:600;line-height:1.5}
+.arrow{display:inline-block;color:var(--accent)}
+.prev{display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:8px}
+.jour{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px 6px;text-align:center}
+.jour .n{font-size:.8rem;color:var(--muted);text-transform:capitalize}
+.jour .i{font-size:1.9rem;margin:4px 0}
+.jour .a{font-weight:600}.jour .b{color:var(--muted);font-size:.9rem}.jour .p{color:var(--accent);font-size:.8rem;margin-top:4px}
+footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:24px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>🌊 Bulletin météo</h1></header>
+  <div class="bar-top"><span id="maj">Chargement…</span><button id="btn">🔄 Actualiser</button></div>
+  <div id="contenu"></div>
+  <footer>Données : Open-Meteo (météo et mer), EMODnet via Open Topo Data (profondeur).<br>Bulletin indicatif : ne remplace ni les cartes marines ni les bulletins officiels (VHF, NAVTEX).</footer>
+</div>
+
+<script>
+const DEFAUT = {lat:51.329, lon:3.1814, nom:"Zeebrugge"};
+const SEUILS = {rafales:60, vagues:2, visi:1};   // km/h, m, km
+const CLE = "bulletin_meteo_cache";
+const $ = id => document.getElementById(id);
+let enCours = false;
+
+function ciel(c){
+  if(c===0) return {i:"☀️",t:"Ciel dégagé",b1:"#1d4ed8",b2:"#38bdf8",a:"#fde68a"};
+  if(c<=2)  return {i:"⛅",t:"Peu nuageux",b1:"#1e3a5f",b2:"#5b7fa6",a:"#bae6fd"};
+  if(c===3) return {i:"☁️",t:"Couvert",b1:"#1f2937",b2:"#4b5563",a:"#cbd5e1"};
+  if(c===45||c===48) return {i:"🌫️",t:"Brouillard",b1:"#3f4a57",b2:"#8b95a1",a:"#e5e7eb"};
+  if(c>=51&&c<=57) return {i:"🌦️",t:"Bruine",b1:"#0f172a",b2:"#1e3a5f",a:"#38bdf8"};
+  if((c>=61&&c<=67)||(c>=80&&c<=82)) return {i:"🌧️",t:c>=80?"Averses":"Pluie",b1:"#0f172a",b2:"#1e3a5f",a:"#38bdf8"};
+  if((c>=71&&c<=77)||c===85||c===86) return {i:"❄️",t:"Neige",b1:"#334155",b2:"#94a3b8",a:"#e0f2fe"};
+  if(c>=95) return {i:"⛈️",t:"Orage",b1:"#1e1b4b",b2:"#4c1d95",a:"#facc15"};
+  return {i:"🌡️",t:"Conditions variables",b1:"#0b1220",b2:"#12304d",a:"#38bdf8"};
+}
+const cardinal = d => ["N","NE","E","SE","S","SO","O","NO"][Math.round(d/45)%8];
+function beaufort(k){const l=[1,6,12,20,29,39,50,62,75,89,103,118];for(let i=0;i<l.length;i++)if(k<l[i])return i;return 12;}
+function dm(v,p,n){const s=v>=0?p:n;v=Math.abs(v);const d=Math.floor(v);return `${d}°${((v-d)*60).toFixed(3).padStart(6,"0")}′ ${s}`;}
+const fleche = d => `<span class="arrow" style="transform:rotate(${(d+180)%360}deg)">↑</span>`;
+const heure = t => new Date(t).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+
+function getPosition(){
+  return new Promise(res=>{
+    if(!navigator.geolocation) return res({err:"Géolocalisation indisponible"});
+    navigator.geolocation.getCurrentPosition(
+      p=>res({lat:p.coords.latitude,lon:p.coords.longitude,prec:p.coords.accuracy}),
+      e=>res({err:e.code===1?"Localisation refusée":"Position introuvable"}),
+      {enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+  });
+}
+
+async function getJSON(url){
+  const ctl = new AbortController(), t = setTimeout(()=>ctl.abort(),15000);
+  try{
+    const r = await fetch(url,{signal:ctl.signal});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return JSON.parse((await r.text()).replace(/\bNaN\b/g,"null"));
+  } finally { clearTimeout(t); }
+}
+
+async function charger(){
+  if(enCours) return; enCours = true;
+  $("maj").textContent = "Localisation…";
+  let pos = await getPosition(), note = "";
+  if(pos.err){ note = pos.err+" : position par défaut ("+DEFAUT.nom+")."; pos = {lat:DEFAUT.lat,lon:DEFAUT.lon,defaut:true}; }
+  const {lat,lon} = pos;
+  $("maj").textContent = "Mise à jour…";
+  const [met,mar,prof] = await Promise.allSettled([
+    getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=auto`),
+    getJSON(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=wave_height,wave_direction,wave_period,sea_surface_temperature`),
+    getJSON(`https://api.opentopodata.org/v1/emod2018?locations=${lat},${lon}`)
+  ]);
+  if(met.status==="fulfilled"){
+    const d = {t:Date.now(),pos,note,met:met.value,mar:mar.status==="fulfilled"?mar.value:null,prof:prof.status==="fulfilled"?prof.value:null};
+    try{ localStorage.setItem(CLE,JSON.stringify(d)); }catch(e){}
+    afficher(d,false);
+  } else {
+    let c = null; try{ c = JSON.parse(localStorage.getItem(CLE)); }catch(e){}
+    if(c) afficher(c,true);
+    else { $("contenu").innerHTML = '<div class="banner alerte">⚠️ Données indisponibles. Vérifie ta connexion internet puis appuie sur Actualiser.</div>'; $("maj").textContent = "Échec"; }
+  }
+  enCours = false;
+}
+
+function afficher(d,horsLigne){
+  const c = d.met.current, j = d.met.daily, pos = d.pos;
+  const th = ciel(c.weather_code);
+  if(!c.is_day && c.weather_code<=48){ th.b1="#020617"; th.b2="#1e1b4b"; th.a="#a5b4fc"; }
+  const s = document.documentElement.style;
+  s.setProperty("--bg1",th.b1); s.setProperty("--bg2",th.b2); s.setProperty("--accent",th.a);
+  document.title = Math.round(c.temperature_2m)+"° "+(pos.defaut?DEFAUT.nom:"Bulletin météo");
+
+  const noeuds = Math.round(c.wind_speed_10m/1.852), noeudsRaf = Math.round(c.wind_gusts_10m/1.852);
+  const visi = Math.round(c.visibility/100)/10;
+  const m = d.mar && d.mar.current && d.mar.current.wave_height!=null ? d.mar.current : null;
+
+  // Profondeur (EMODnet : négatif = sous l'eau)
+  let profHtml = "";
+  const e = d.prof && d.prof.results && d.prof.results[0] ? d.prof.results[0].elevation : null;
+  const profTxt = (typeof e==="number" && e<0) ? `${Math.abs(e).toFixed(1)} <small>m</small>` : `<small>indisponible</small>`;
+  const profSub = (typeof e==="number" && e<0) ? "sous le zéro des cartes (LAT), sonde indicative" : "terre, zone non couverte ou service injoignable";
+  profHtml = `<div class="item"><div class="label">⚓ Profondeur</div><div class="value">${profTxt}</div><div class="sub">${profSub}</div></div>`;
+
+  // Alertes
+  const al = [];
+  if(c.wind_gusts_10m>=SEUILS.rafales) al.push(`💨 Rafales fortes : ${Math.round(c.wind_gusts_10m)} km/h (${noeudsRaf} nœuds)`);
+  if(visi<SEUILS.visi) al.push(`👁️ Visibilité réduite : ${visi} km`);
+  if(c.weather_code>=95) al.push("⛈️ Orage en cours");
+  if(m && m.wave_height>=SEUILS.vagues) al.push(`🌊 Mer agitée : vagues de ${m.wave_height} m`);
+
+  let h = "";
+  if(horsLigne) h += `<div class="banner info">📴 Hors ligne : données de ${heure(d.t)}. Elles peuvent ne plus être à jour.</div>`;
+  if(d.note) h += `<div class="banner info">📍 ${d.note}</div>`;
+  if(al.length) h += `<div class="banner alerte">⚠️ ${al.join("<br>⚠️ ")}</div>`;
+
+  h += `<div class="item" style="margin-bottom:12px"><div class="label">📍 ${pos.defaut?"Position par défaut : "+DEFAUT.nom:"Position actuelle"}</div>
+    <div class="pos">${dm(pos.lat,"N","S")}<br>${dm(pos.lon,"E","O")}</div>
+    ${pos.prec?`<div class="sub">précision ± ${Math.round(pos.prec)} m</div>`:""}</div>`;
+
+  h += `<section class="hero"><div class="icon">${th.i}</div>
+    <div><div class="temp">${Math.round(c.temperature_2m*10)/10}°</div><div class="desc">${th.t}</div></div>
+    <div class="minmax"><div class="max"><span>Maximum</span>${Math.round(j.temperature_2m_max[0]*10)/10} °C</div>
+    <div class="min" style="margin-top:8px"><span>Minimum</span>${Math.round(j.temperature_2m_min[0]*10)/10} °C</div></div></section>`;
+
+  h += `<h2>Vent &amp; visibilité</h2><div class="grid">
+    <div class="item"><div class="label">💨 Vent</div><div class="value">${Math.round(c.wind_speed_10m)} <small>km/h</small></div><div class="sub">${noeuds} nœuds · force ${beaufort(c.wind_speed_10m)}</div></div>
+    <div class="item"><div class="label">🌬️ Rafales</div><div class="value">${Math.round(c.wind_gusts_10m)} <small>km/h</small></div><div class="sub">${noeudsRaf} nœuds</div></div>
+    <div class="item"><div class="label">🧭 Vent venant du</div><div class="value">${fleche(c.wind_direction_10m)} ${cardinal(c.wind_direction_10m)} <small>${Math.round(c.wind_direction_10m)}°</small></div></div>
+    <div class="item"><div class="label">👁️ Visibilité</div><div class="value">${visi} <small>km</small></div></div>
+    <div class="item"><div class="label">🌧️ Risque de pluie</div><div class="value">${j.precipitation_probability_max[0]} <small>%</small></div></div>
+    <div class="item"><div class="label">🌅 Lever · 🌇 Coucher</div><div class="value">${j.sunrise[0].slice(11,16)} · ${j.sunset[0].slice(11,16)}</div></div></div>`;
+
+  h += `<h2>Mer</h2><div class="grid">${profHtml}`;
+  if(m) h += `
+    <div class="item"><div class="label">🌊 Hauteur des vagues</div><div class="value">${m.wave_height} <small>m</small></div></div>
+    <div class="item"><div class="label">⏱️ Période de la houle</div><div class="value">${m.wave_period} <small>s</small></div></div>
+    <div class="item"><div class="label">🧭 Houle venant du</div><div class="value">${fleche(m.wave_direction)} ${cardinal(m.wave_direction)} <small>${Math.round(m.wave_direction)}°</small></div></div>
+    <div class="item"><div class="label">🌡️ Température de la mer</div><div class="value">${m.sea_surface_temperature} <small>°C</small></div></div>`;
+  h += `</div>`;
+  if(!m) h += `<div class="sub" style="margin-top:8px">Données de houle indisponibles ici (position trop proche de la terre ou hors couverture).</div>`;
+
+  h += `<h2>Les 6 prochains jours</h2><div class="prev">`;
+  for(let i=1;i<=6&&j.time[i];i++){
+    const cj = ciel(j.weather_code[i]);
+    const nom = new Date(j.time[i]).toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit"});
+    h += `<div class="jour"><div class="n">${nom}</div><div class="i">${cj.i}</div><div class="a">${Math.round(j.temperature_2m_max[i])}°</div><div class="b">${Math.round(j.temperature_2m_min[i])}°</div><div class="p">💧 ${j.precipitation_probability_max[i]} %</div></div>`;
+  }
+  h += `</div>`;
+
+  $("contenu").innerHTML = h;
+  $("maj").textContent = (horsLigne?"Dernières données : ":"Mis à jour à ")+heure(d.t);
+}
+
+$("btn").addEventListener("click",charger);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) charger(); });
+setInterval(charger, 10*60*1000);
+charger();
+</script>
+</body>
+</html>
