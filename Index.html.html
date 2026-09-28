@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>16.5&#xB0; Zeebrugge</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#x2601;&#xFE0F;</text></svg>">
+
+<style>
+:root{
+  --bg1:#1f2937;
+  --bg2:#4b5563;
+  --card:rgba(255,255,255,0.10);
+  --border:rgba(255,255,255,0.16);
+  --text:#f8fafc;
+  --muted:#cbd5e1;
+  --accent:#cbd5e1;
+}
+*{ box-sizing:border-box; }
+body{
+  margin:0; min-height:100vh;
+  font-family:"Segoe UI", system-ui, sans-serif;
+  color:var(--text);
+  background:linear-gradient(160deg,var(--bg1),var(--bg2)) fixed;
+  padding:24px 16px;
+}
+.wrap{ max-width:820px; margin:auto; animation:fondu .6s ease both; }
+@keyframes fondu{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+
+header{ text-align:center; margin-bottom:24px; }
+header h1{ margin:0; font-size:1.4rem; font-weight:600; letter-spacing:.5px; }
+header p{ margin:4px 0 0; color:var(--muted); font-size:.9rem; }
+
+.alerte{
+  background:rgba(239,68,68,0.22); border:1px solid #f87171;
+  border-radius:16px; padding:14px 18px; margin-bottom:16px; line-height:1.6;
+}
+
+.hero{
+  background:var(--card); border:1px solid var(--border); border-radius:24px;
+  padding:28px; display:flex; align-items:center; justify-content:space-between;
+  gap:16px; flex-wrap:wrap; backdrop-filter:blur(8px);
+}
+.hero .icon{ font-size:5rem; line-height:1; }
+.hero .temp{ font-size:4.5rem; font-weight:300; line-height:1; }
+.hero .desc{ color:var(--muted); margin-top:6px; font-size:1.1rem; }
+.hero .minmax{ text-align:right; font-size:1.1rem; }
+.hero .minmax span{ display:block; color:var(--muted); font-size:.8rem; }
+.hero .max{ color:#fb923c; }
+.hero .min{ color:var(--accent); }
+
+h2{ margin:28px 0 10px; font-size:.8rem; text-transform:uppercase; letter-spacing:2px; color:var(--accent); font-weight:600; }
+
+.grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; }
+.item{
+  background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px;
+  transition:transform .15s ease, border-color .15s ease;
+}
+.item:hover{ transform:translateY(-2px); border-color:var(--accent); }
+.label{ color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.value{ font-size:1.6rem; font-weight:600; }
+.value small{ font-size:.9rem; font-weight:400; color:var(--muted); }
+.sub{ color:var(--muted); font-size:.85rem; margin-top:4px; }
+
+.bar{ height:6px; background:rgba(255,255,255,0.12); border-radius:99px; margin-top:10px; overflow:hidden; }
+.bar div{ height:100%; width:88%; background:var(--accent); border-radius:99px; }
+
+.arrow{ display:inline-block; color:var(--accent); transform:rotate(180deg); }
+
+.previsions{ display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:10px; }
+.jour{
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:14px 8px; text-align:center;
+}
+.nomjour{ font-size:.85rem; color:var(--muted); text-transform:capitalize; }
+.iconejour{ font-size:2rem; margin:6px 0; }
+.tmax{ font-weight:600; font-size:1.1rem; }
+.tmin{ color:var(--muted); font-size:.95rem; }
+.pluiejour{ color:var(--accent); font-size:.8rem; margin-top:6px; }
+
+footer{ text-align:center; color:var(--muted); font-size:.85rem; margin-top:28px; }
+
+@media (max-width:480px){
+  .hero{ justify-content:center; text-align:center; }
+  .hero .minmax{ text-align:center; }
+  .hero .temp{ font-size:3.6rem; }
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<header>
+  <h1>&#x1F30A; Bulletin m&#xE9;t&#xE9;o</h1>
+  <p>Zeebrugge</p>
+</header>
+
+
+
+<section class="hero">
+  <div class="icon">&#x2601;&#xFE0F;</div>
+  <div>
+    <div class="temp">16.5&#xB0;</div>
+    <div class="desc">Couvert</div>
+  </div>
+  <div class="minmax">
+    <div class="max"><span>Maximum</span>19.1 &#xB0;C</div>
+    <div class="min" style="margin-top:10px"><span>Minimum</span>16.1 &#xB0;C</div>
+  </div>
+</section>
+
+<h2>Vent &amp; visibilit&#xE9;</h2>
+<div class="grid">
+  <div class="item">
+    <div class="label">&#x1F4A8; Vent</div>
+    <div class="value">7.6 <small>km/h</small></div>
+    <div class="sub">4 n&oelig;uds &#xB7; force 2</div>
+  </div>
+  <div class="item">
+    <div class="label">&#x1F32C;&#xFE0F; Rafales</div>
+    <div class="value">13.7 <small>km/h</small></div>
+    <div class="sub">7 n&oelig;uds</div>
+  </div>
+  <div class="item">
+    <div class="label">&#x1F9ED; Vent venant du</div>
+    <div class="value"><span class="arrow">&#x2191;</span> N <small>0&#xB0;</small></div>
+  </div>
+  <div class="item">
+    <div class="label">&#x1F441;&#xFE0F; Visibilit&#xE9;</div>
+    <div class="value">50.0 <small>km</small></div>
+  </div>
+  <div class="item">
+    <div class="label">&#x1F327;&#xFE0F; Risque de pluie</div>
+    <div class="value">88 <small>%</small></div>
+    <div class="bar"><div></div></div>
+  </div>
+</div>
+
+<h2>Soleil</h2>
+<div class="grid">
+  <div class="item"><div class="label">&#x1F305; Lever</div><div class="value">07:42</div></div>
+  <div class="item"><div class="label">&#x1F307; Coucher</div><div class="value">19:32</div></div>
+</div>
+
+<h2>Mer</h2>
+<div class="grid">
+  <div class="item"><div class="label">&#x1F30A; Hauteur des vagues</div><div class="value">0.22 <small>m</small></div></div>
+  <div class="item"><div class="label">&#x23F1;&#xFE0F; P&#xE9;riode de la houle</div><div class="value">3.55 <small>s</small></div></div>
+  <div class="item"><div class="label">&#x1F9ED; Houle venant du</div><div class="value"><span class="arrow" style="transform:rotate(105deg)">&#x2191;</span> O <small>285&#xB0;</small></div></div>
+  <div class="item"><div class="label">&#x1F321;&#xFE0F; Temp&#xE9;rature de la mer</div><div class="value">18.7 <small>&#xB0;C</small></div></div>
+</div>
+
+<h2>Les 6 prochains jours</h2>
+<div class="previsions">
+<div class='jour'><div class='nomjour'>mar. 29/09</div><div class='iconejour'>&#x1F326;&#xFE0F;</div><div class='tmax'>26&#xB0;</div><div class='tmin'>17&#xB0;</div><div class='pluiejour'>&#x1F4A7; 89 %</div></div><div class='jour'><div class='nomjour'>mer. 30/09</div><div class='iconejour'>&#x1F327;&#xFE0F;</div><div class='tmax'>21&#xB0;</div><div class='tmin'>18&#xB0;</div><div class='pluiejour'>&#x1F4A7; 80 %</div></div><div class='jour'><div class='nomjour'>jeu. 01/10</div><div class='iconejour'>&#x1F327;&#xFE0F;</div><div class='tmax'>19&#xB0;</div><div class='tmin'>14&#xB0;</div><div class='pluiejour'>&#x1F4A7; 79 %</div></div><div class='jour'><div class='nomjour'>ven. 02/10</div><div class='iconejour'>&#x2601;&#xFE0F;</div><div class='tmax'>19&#xB0;</div><div class='tmin'>11&#xB0;</div><div class='pluiejour'>&#x1F4A7; 4 %</div></div><div class='jour'><div class='nomjour'>sam. 03/10</div><div class='iconejour'>&#x2601;&#xFE0F;</div><div class='tmax'>18&#xB0;</div><div class='tmin'>6&#xB0;</div><div class='pluiejour'>&#x1F4A7; 6 %</div></div><div class='jour'><div class='nomjour'>dim. 04/10</div><div class='iconejour'>&#x1F326;&#xFE0F;</div><div class='tmax'>17&#xB0;</div><div class='tmin'>11&#xB0;</div><div class='pluiejour'>&#x1F4A7; 19 %</div></div>
+</div>
+
+<footer>Derni&#xE8;re mise &#xE0; jour : 28/09/2026 &#xE0; 15:09</footer>
+
+</div>
+</body>
+</html>
